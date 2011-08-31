@@ -1,0 +1,12 @@
+Usage: /your/custom/polit.php [options] cmd [args]
+
+Options:
+-- base_dir=..:     The directory that will be used to resolve relative paths in your commands.
+                    This defaults to '.'
+-h, --help:         Print this dialog.
+--group=..:         Select a single group, or a comma-separated list of groups, of servers to access.
+--host=..:          Select a single host, or a comma-separated list of hosts, to access (by host name).
+-v:                 Verbose mode; this prints more information messages.
+-q:                 Only output errors.
+-qq:                Output absolutely nothing.
+
