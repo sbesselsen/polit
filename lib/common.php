@@ -24,6 +24,7 @@ function p_remote_run($remote_cmd, $server = null) {
         return;
     }
     
+    p_log_indent("Running {$remote_cmd} on {$server['host']}");
     $cmd = array ('ssh');
     if (!empty ($server['port'])) {
         $cmd[] = "-p{$server['port']}";
@@ -48,6 +49,8 @@ function p_remote_run($remote_cmd, $server = null) {
     }
     fclose($out);
     proc_close($pp);
+    
+    p_log_unindent();
 }
 
 /**
