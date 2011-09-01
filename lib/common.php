@@ -48,6 +48,8 @@ function p_remote_run($remote_cmd, $server = null) {
         p_output(p_log_server_id($server) . '> ' . $line);
     }
     fclose($out);
+    fclose($err);
+    fclose($in);
     proc_close($pp);
     
     p_log_unindent();
@@ -113,8 +115,8 @@ function p_sync($src, $dest, array $options = array ()) {
         $args[] = $src_abs . '/';
         $args[] = $dest_abs;
         
-        list ($pp, $stdin, $stdout, $stderr) = p_shell_cmd('rsync ' . implode(' ', $args), true);
-        while ($line = fgets($stdout, 2048)) {
+        list ($pp, $in, $out, $err) = p_shell_cmd('rsync ' . implode(' ', $args), true);
+        while ($line = fgets($out, 2048)) {
             if (!$line = trim($line)) {
                 continue;
             }
@@ -123,7 +125,9 @@ function p_sync($src, $dest, array $options = array ()) {
             }
             p_log($line);
         }
-        fclose($stdout);
+        fclose($out);
+        fclose($err);
+        fclose($in);
         proc_close($pp);
         
         p_log_unindent();
