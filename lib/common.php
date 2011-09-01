@@ -120,7 +120,7 @@ function p_sync($src, $dest, array $options = array ()) {
             if (!$line = trim($line)) {
                 continue;
             }
-            if (preg_match('(^(sending incremental|sent [0-9]|total size is))', $line)) {
+            if (preg_match('(^(sending incremental|sent [0-9]|total size is|building file list))', $line)) {
                 continue;
             }
             p_log($line);
