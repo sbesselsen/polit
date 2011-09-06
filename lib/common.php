@@ -43,14 +43,20 @@ function p_remote_run($remote_cmd, $server = null) {
     $cmd[] = escapeshellarg(p_apply_vars($remote_cmd, $server));
     
     $cmd = implode(' ', $cmd);
-    list ($pp, $in, $out, $err) = p_shell_cmd($cmd, true);
-    while ($line = fgets($out, 2048)) {
-        p_output(p_log_server_id($server) . '> ' . $line);
-    }
-    fclose($out);
-    fclose($err);
-    fclose($in);
-    proc_close($pp);
+    p_shell_cmd($cmd, array (
+        'stdout' => function ($line) use ($server) {
+            if (!$line = trim($line)) {
+                return;
+            }
+            p_output(p_log_server_id($server) . '> ' . $line . "\n");
+        }, 
+        'stderr' => function ($line) use ($server) {
+            if (!$line = trim($line)) {
+                return;
+            }
+            p_error(p_log_server_id($server) . '> ' . $line);
+        }
+    ));
     
     p_log_unindent();
 }
@@ -115,20 +121,23 @@ function p_sync($src, $dest, array $options = array ()) {
         $args[] = $src_abs . '/';
         $args[] = $dest_abs;
         
-        list ($pp, $in, $out, $err) = p_shell_cmd('rsync ' . implode(' ', $args), true);
-        while ($line = fgets($out, 2048)) {
-            if (!$line = trim($line)) {
-                continue;
+        p_shell_cmd('rsync ' . implode(' ', $args), array (
+            'stdout' => function ($line) use ($server) {
+                if (!$line = trim($line)) {
+                    return;
+                }
+                if (preg_match('(^(sending incremental|sent [0-9]|total size is|building file list))', $line)) {
+                    return;
+                }
+                p_log(p_log_server_id($server) . '> ' . $line);
+            }, 
+            'stderr' => function ($line) use ($server) {
+                if (!$line = trim($line)) {
+                    return;
+                }
+                p_error(p_log_server_id($server) . '> ' . $line);
             }
-            if (preg_match('(^(sending incremental|sent [0-9]|total size is|building file list))', $line)) {
-                continue;
-            }
-            p_log($line);
-        }
-        fclose($out);
-        fclose($err);
-        fclose($in);
-        proc_close($pp);
+        ));
         
         p_log_unindent();
     }
