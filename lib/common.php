@@ -121,23 +121,7 @@ function p_sync($src, $dest, array $options = array ()) {
         $args[] = $src_abs . '/';
         $args[] = $dest_abs;
         
-        p_shell_cmd('rsync ' . implode(' ', $args), array (
-            'stdout' => function ($line) use ($server) {
-                if (!$line = trim($line)) {
-                    return;
-                }
-                if (preg_match('(^(sending incremental|sent [0-9]|total size is|building file list))', $line)) {
-                    return;
-                }
-                p_log(p_log_server_id($server) . '> ' . $line);
-            }, 
-            'stderr' => function ($line) use ($server) {
-                if (!$line = trim($line)) {
-                    return;
-                }
-                p_error(p_log_server_id($server) . '> ' . $line);
-            }
-        ));
+        p_shell_cmd('rsync ' . implode(' ', $args));
         
         p_log_unindent();
     }

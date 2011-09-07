@@ -119,71 +119,13 @@ function p_local_path($path) {
  * @param array $options
  */
 function p_shell_cmd($cmd, array $options = array ()) {
-    $options += array ('stdout' => '_p_shell_cmd_out', 'stderr' => '_p_shell_cmd_err');
     $descriptorspec = array (
-        0 => array ('pipe', 'r'),
-        1 => array ('pipe', 'w'),
-        2 => array ('pipe', 'w'),
+        0 => STDIN,
+        1 => STDOUT,
+        2 => STDERR,
     );
-    $restart = false;
-    do {
-        if ($restart) {
-            p_log("Restarted.");
-        }
-        $restart = false;
-        $pp = proc_open($cmd, $descriptorspec, $pipes);
-        stream_set_blocking($pipes[1], 0);
-        stream_set_blocking($pipes[2], 0);
-        $skips = 0;
-        while (false !== ($num = stream_select($r = array ($pipes[1], $pipes[2]), $w = null, $e = null, 2, 0))) {
-            if ($num > 0) {
-                $skips = 0;
-                if ($line = fgets($pipes[1], 2048)) {
-                    call_user_func($options['stdout'], $line);
-                }
-                if ($line = fgets($pipes[2], 2048)) {
-                    call_user_func($options['stderr'], $line);
-                }
-            } else {
-                $skips++;
-                if ($skips % 10 == 0) { // ask every 20 seconds
-                    fwrite(STDERR, _p_log_color("It's taking a while. Restart?", 'red') . "\n> ");
-                    $n = stream_select($r = array (STDIN), $w = null, $e = null, 5, 0);
-                    if ($n == 0) {
-                        fwrite(STDERR, "\nGuess not!\n");
-                    } else {
-                        $ln = fgets(STDIN, 4);
-                        if (trim($ln) == 'y') {
-                            // start again
-                            $restart = true;
-                            p_log("Forcing restart...");
-                            
-                            // kill the process and all sub processes
-                            $status = proc_get_status($pp);
-                            posix_setpgid($status['pid'], $status['pid']);
-                            posix_kill(-$status['pid'], 9);
-                            proc_terminate($pp);
-                            break;
-                        }
-                    }
-                }
-                fwrite(STDERR, '.');
-            }
-            if ((!$pipes[1] || feof($pipes[1])) && (!$pipes[2] || feof($pipes[2]))) {
-                break; // done here
-            }
-        }
-        array_map('fclose', $pipes);
-        proc_close($pp);
-    } while ($restart);
-}
-
-function _p_shell_cmd_out($line) {
-    p_log("> " . trim($line));
-}
-
-function _p_shell_cmd_err($line) {
-    p_error("> " . trim($line));
+    $pp = proc_open($cmd, $descriptorspec, $pipes);
+    proc_close($pp);
 }
 
 function p_log_server_id(array $server) {
